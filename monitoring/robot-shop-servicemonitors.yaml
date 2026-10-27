@@ -1,0 +1,31 @@
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: robot-shop-cart
+  namespace: robot-shop
+  labels:
+    release: monitoring
+spec:
+  selector:
+    matchLabels:
+      service: cart
+  endpoints:
+    - port: http
+      path: /metrics
+      interval: 15s
+---
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: robot-shop-payment
+  namespace: robot-shop
+  labels:
+    release: monitoring
+spec:
+  selector:
+    matchLabels:
+      service: payment
+  endpoints:
+    - port: http
+      path: /metrics
+      interval: 15s
