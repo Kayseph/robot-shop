@@ -1,0 +1,33 @@
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: robot-shop-slo
+  namespace: monitoring
+  labels:
+    release: monitoring
+spec:
+  groups:
+    - name: robot-shop.slo
+      interval: 30s
+      rules:
+        - record: robot_shop:ready_pod_ratio
+          expr: |
+            sum(kube_pod_status_ready{namespace="robot-shop",condition="true"})
+            /
+            count(kube_pod_status_ready{namespace="robot-shop",condition="true"})
+        - record: robot_shop:availability_30d
+          expr: avg_over_time(robot_shop:ready_pod_ratio[30d])
+        - record: robot_shop:error_budget_remaining_ratio
+          expr: |
+            clamp_min(
+              (robot_shop:availability_30d - 0.99) / (1 - 0.99),
+              0
+            )
+        - alert: RobotShopReadinessBelowSLO
+          expr: robot_shop:ready_pod_ratio < 0.99
+          for: 5m
+          labels:
+            severity: warning
+          annotations:
+            summary: Robot Shop pod readiness is below the 99% target
+            description: The ratio of ready Robot Shop pods has remained below 99% for 5 minutes.
